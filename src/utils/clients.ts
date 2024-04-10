@@ -5,9 +5,7 @@ import { ENTRYPOINT_ADDRESS_V07, bundlerActions } from "permissionless";
 
 export const getBundlerClient = () =>
   createClient({
-    transport: http(
-      `https://api.pimlico.io/v1/sepolia/rpc?apikey=YOUR_API_KEY_HERE`
-    ),
+    transport: http(process.env.NEXT_PUBLIC_BUNDLER_URL!),
     chain: sepolia,
   })
     .extend(bundlerActions(ENTRYPOINT_ADDRESS_V07))
