@@ -79,8 +79,6 @@ export async function createUnsignedUserOp(
     signature: chosenValidator.mockSignature,
   };
 
-  console.log(formatUserOp(partialUserOp));
-
   const bundlerClient = getBundlerClient();
 
   const gasPriceResult = await bundlerClient.getUserOperationGasPrice();
@@ -126,7 +124,6 @@ export async function signUserOp(
 export async function submitUserOpToBundler(
   userOp: UserOperation<"v0.7">
 ): Promise<Hex> {
-  console.log(userOp);
   const bundlerClient = getBundlerClient();
   return await bundlerClient.sendUserOperation({
     userOperation: userOp,
