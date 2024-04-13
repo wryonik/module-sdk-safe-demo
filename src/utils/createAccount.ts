@@ -28,8 +28,14 @@ type InitialModule = {
 
 export const createAccount = async ({
   salt,
+  initialAction,
 }: {
   salt: string;
+  initialAction: {
+    target: Address;
+    value: string;
+    callData: Hex;
+  };
 }): Promise<{
   address: Address;
   initCode: Hex;
@@ -41,6 +47,7 @@ export const createAccount = async ({
   return await getAccount({
     salt: saltNonce,
     initialValidators,
+    initialAction,
   });
 };
 
@@ -58,9 +65,15 @@ function getInitialValidators(): InitialModule[] {
 export async function getAccount({
   salt,
   initialValidators,
+  initialAction,
 }: {
   salt: Hex;
   initialValidators: InitialModule[];
+  initialAction: {
+    target: Address;
+    value: string;
+    callData: Hex;
+  };
 }): Promise<{
   address: Address;
   initCode: Hex;
@@ -90,13 +103,7 @@ export async function getAccount({
     safe7579: SAFE_7579_ADDRESS,
     validators: initialValidators,
     callData: encodeUserOpCallData({
-      actions: [
-        {
-          target: "0xF7C012789aac54B5E33EA5b88064ca1F1172De05" as Address,
-          value: "1",
-          callData: "0x" as Hex,
-        },
-      ],
+      actions: [initialAction],
     }),
   };
 

@@ -55,6 +55,11 @@ export default function Home() {
 
     const activeAccount = await createAccount({
       salt,
+      initialAction: {
+        target: "0xF7C012789aac54B5E33EA5b88064ca1F1172De05" as Address,
+        value: "1",
+        callData: "0x" as Hex,
+      },
     });
 
     await getEth(activeAccount.address);
