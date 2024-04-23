@@ -89,15 +89,11 @@ export async function getAccount({
       functionName: "initSafe7579",
       args: [
         SAFE_7579_ADDRESS,
-        [],
-        [],
-        [],
-        {
-          module: zeroAddress,
-          initData: "0x",
-        },
-        [],
-        0,
+        [], // executors
+        [], // fallbacks
+        [], // hooks
+        [], // attesters
+        0, // threshold
       ],
     }),
     safe7579: SAFE_7579_ADDRESS,
@@ -109,58 +105,12 @@ export async function getAccount({
 
   const publicClient = getPublicClient();
 
-  const initDataAbi = [
-    {
-      components: [
-        {
-          name: "singleton",
-          type: "address",
-        },
-        {
-          name: "owners",
-          type: "address[]",
-        },
-        {
-          name: "threshold",
-          type: "uint256",
-        },
-        {
-          name: "setupTo",
-          type: "address",
-        },
-        {
-          name: "setupData",
-          type: "bytes",
-        },
-        {
-          name: "safe7579",
-          type: "address",
-        },
-        {
-          components: [
-            {
-              name: "module",
-              type: "address",
-            },
-            {
-              name: "initData",
-              type: "bytes",
-            },
-          ],
-          name: "validators",
-          type: "tuple[]",
-        },
-        {
-          name: "callData",
-          type: "bytes",
-        },
-      ],
-      name: "InitData",
-      type: "tuple",
-    },
-  ];
-
-  const initHash = keccak256(encodeAbiParameters(initDataAbi, [initData]));
+  const initHash = (await publicClient.readContract({
+    address: LAUNCHPAD_ADDRESS,
+    abi: Launchpad.abi,
+    functionName: "hash",
+    args: [initData],
+  })) as Hex;
 
   const factoryInitializer = encodeFunctionData({
     abi: Launchpad.abi,
