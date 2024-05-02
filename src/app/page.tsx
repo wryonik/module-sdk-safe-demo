@@ -1,96 +1,66 @@
 "use client";
 
-import { getBundlerClient, getPublicClient } from "@/utils/clients";
+import { getBundlerClient } from "@/utils/clients";
 import { VALIDATOR_ADDRESS } from "@/utils/contracts";
 import { createAccount } from "@/utils/createAccount";
+import { getEth } from "@/utils/faucet";
+import { generateRandomString } from "@/utils/misc";
 import { createAndSignUserOp, submitUserOpToBundler } from "@/utils/userop";
-import {
-  Address,
-  Hex,
-  createWalletClient,
-  getAddress,
-  http,
-  parseEther,
-} from "viem";
-import { privateKeyToAccount } from "viem/accounts";
-import { sepolia } from "viem/chains";
-
-const generateRandomString = function () {
-  return Math.random().toString(20).substr(2, 6);
-};
+import { chosenValidator } from "@/utils/validator";
+import { Address, Hex, keccak256, stringToBytes } from "viem";
 
 export default function Home() {
-  const getEth = async (account: Address) => {
-    const walletClient = createWalletClient({
-      transport: http("https://rpc.ankr.com/eth_sepolia"),
-      chain: sepolia,
-      account: privateKeyToAccount(process.env.NEXT_PUBLIC_FAUCET_KEY! as Hex),
-    });
-    const publicClient = getPublicClient();
-
-    if (
-      (await publicClient.getBalance({ address: account })) > parseEther("0.04")
-    ) {
-      console.log("already has eth");
-    } else {
-      const hash = await walletClient.sendTransaction({
-        to: getAddress(account),
-        value: parseEther("0.1"),
-      });
-
-      const receipt = await publicClient.waitForTransactionReceipt({
-        hash,
-      });
-      console.log(receipt);
-    }
-  };
   const sendEth = async () => {
-    console.log("send eth");
-
+    // get the salt from local storage or generate a new one
+    // this salt is used as an identifier for the account
     let salt = localStorage.getItem("salt");
     if (!salt) {
       salt = generateRandomString();
       localStorage.setItem("salt", salt);
     }
+    const saltNonce = keccak256(stringToBytes(salt));
 
+    // create a new account
     const activeAccount = await createAccount({
-      salt,
-      initialAction: {
+      salt: saltNonce,
+      validators: [{ module: VALIDATOR_ADDRESS, initData: "0x" }],
+      executors: [],
+      fallbacks: [],
+      hooks: [],
+      safeConfig: {
+        owners: ["0x503b54Ed1E62365F0c9e4caF1479623b08acbe77"],
+        threshold: 1,
+      },
+      registryConfig: {
+        attesters: [],
+        threshold: 0,
+      },
+      initialExecution: {
         target: "0xF7C012789aac54B5E33EA5b88064ca1F1172De05" as Address,
         value: "1",
         callData: "0x" as Hex,
       },
     });
 
+    // get some eth from the faucet
     await getEth(activeAccount.address);
 
-    const chosenValidator = {
-      address: VALIDATOR_ADDRESS,
-      mockSignature:
-        "0xe8b94748580ca0b4993c9a1b86b5be851bfc076ff5ce3a1ff65bf16392acfcb800f9b4f1aef1555c7fce5599fffb17e7c635502154a0333ba21f3ae491839af51c",
-      signMessageAsync: async (message: Hex, activeAccount: any) => {
-        const signer = privateKeyToAccount(
-          "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
-        );
-        const signature = await signer.signMessage({
-          message: { raw: message },
-        });
-        return signature;
-      },
-    };
-
+    // create and sign a user operation
     const userOp = await createAndSignUserOp({
       activeAccount,
       callData: activeAccount.callData,
       chosenValidator,
     });
 
+    // submit the user operation to the bundler
     const hash = (await submitUserOpToBundler(userOp)) as Hex;
 
+    // wait for the user operation to be processed
     const receipt = await getBundlerClient().waitForUserOperationReceipt({
       hash,
     });
 
+    // log the receipt
     console.log(receipt);
   };
 

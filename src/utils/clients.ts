@@ -13,7 +13,7 @@ export const getBundlerClient = () =>
 
 export const getPublicClient = () => {
   return createPublicClient({
-    transport: http("https://rpc.ankr.com/eth_sepolia"),
+    transport: http(process.env.NEXT_PUBLIC_RPC_URL!),
     chain: sepolia,
   });
 };

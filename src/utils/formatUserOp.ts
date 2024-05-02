@@ -6,6 +6,7 @@ BigInt.prototype.toJSON = function () {
   return this.toString();
 };
 
+// this is a helper function to format the user operation for debugging (eg simulating on tenderly)
 export const formatUserOp = (partialUserOp: UserOperation<"v0.7">) => {
   const initCode =
     partialUserOp.factory && partialUserOp.factoryData

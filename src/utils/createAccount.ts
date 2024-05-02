@@ -3,12 +3,8 @@ import Launchpad from "./abis/Launchpad.json";
 import {
   Address,
   Hex,
-  encodeAbiParameters,
   encodeFunctionData,
   encodePacked,
-  keccak256,
-  parseAbi,
-  stringToBytes,
   zeroAddress,
 } from "viem";
 import { getPublicClient } from "./clients";
@@ -17,63 +13,44 @@ import {
   LAUNCHPAD_ADDRESS,
   SAFE_7579_ADDRESS,
   SAFE_SINGLETON_ADDRESS,
-  VALIDATOR_ADDRESS,
 } from "./contracts";
-import { encodeUserOpCallData } from "./userop";
+import { Execution, encodeUserOpCallData } from "./userop";
 
-type InitialModule = {
+type ModuleInit = {
   module: Address;
   initData: Hex;
 };
 
-export const createAccount = async ({
-  salt,
-  initialAction,
-}: {
-  salt: string;
-  initialAction: {
-    target: Address;
-    value: string;
-    callData: Hex;
-  };
-}): Promise<{
-  address: Address;
-  initCode: Hex;
-  callData: Hex;
-}> => {
-  const saltNonce = keccak256(stringToBytes(salt));
-
-  const initialValidators = getInitialValidators();
-  return await getAccount({
-    salt: saltNonce,
-    initialValidators,
-    initialAction,
-  });
+type RegistryConfig = {
+  attesters: Address[];
+  threshold: number;
 };
 
-function getInitialValidators(): InitialModule[] {
-  const initialValidators: InitialModule[] = [
-    {
-      module: VALIDATOR_ADDRESS,
-      initData: "0x",
-    },
-  ];
+type SafeConfig = {
+  owners: Address[];
+  threshold: number;
+};
 
-  return initialValidators;
-}
-
-export async function getAccount({
+// create a new account
+// todo: add client side logic instead of rpc calls
+export async function createAccount({
   salt,
-  initialValidators,
-  initialAction,
+  validators,
+  executors,
+  fallbacks,
+  hooks,
+  safeConfig,
+  registryConfig,
+  initialExecution,
 }: {
   salt: Hex;
-  initialValidators: InitialModule[];
-  initialAction: {
-    target: Address;
-    value: string;
-    callData: Hex;
-  };
+  validators: ModuleInit[];
+  executors: ModuleInit[];
+  fallbacks: ModuleInit[];
+  hooks: ModuleInit[];
+  safeConfig: SafeConfig;
+  registryConfig: RegistryConfig;
+  initialExecution: Execution;
 }): Promise<{
   address: Address;
   initCode: Hex;
@@ -81,25 +58,25 @@ export async function getAccount({
 }> {
   const initData = {
     singleton: SAFE_SINGLETON_ADDRESS,
-    owners: ["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"],
-    threshold: BigInt(1),
+    owners: safeConfig.owners,
+    threshold: safeConfig.threshold,
     setupTo: LAUNCHPAD_ADDRESS,
     setupData: encodeFunctionData({
       abi: Launchpad.abi,
       functionName: "initSafe7579",
       args: [
         SAFE_7579_ADDRESS,
-        [], // executors
-        [], // fallbacks
-        [], // hooks
-        [], // attesters
-        0, // threshold
+        executors,
+        fallbacks,
+        hooks,
+        registryConfig.attesters,
+        registryConfig.threshold,
       ],
     }),
     safe7579: SAFE_7579_ADDRESS,
-    validators: initialValidators,
+    validators: validators,
     callData: encodeUserOpCallData({
-      actions: [initialAction],
+      executions: [initialExecution],
     }),
   };
 

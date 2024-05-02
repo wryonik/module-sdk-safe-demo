@@ -13,11 +13,11 @@ export const SAFE_SINGLETON_ADDRESS: Address =
 export const SAFE_7579_ADDRESS: Address =
   "0xD2Aa2F19Bf6700bE99E140A0b283fE9EF9438A15";
 
-export const REGISTRY_ADDRESS: Address =
-  "0x1d8c40f958fb6998067e9b8b26850d2ae30b7c70";
-
 export const LAUNCHPAD_ADDRESS: Address =
   "0x1ec6a1e000dd440995667e48cb880785c7d6831c";
 
+export const REGISTRY_ADDRESS: Address =
+  "0x1d8c40f958fb6998067e9b8b26850d2ae30b7c70"; // mock registry
+
 export const VALIDATOR_ADDRESS: Address =
-  "0x503b54Ed1E62365F0c9e4caF1479623b08acbe77";
+  "0x503b54Ed1E62365F0c9e4caF1479623b08acbe77"; // mock validator

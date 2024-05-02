@@ -24,6 +24,12 @@ export const CALL_TYPE = {
   BATCH: "0x0100000000000000000000000000000000000000000000000000000000000000",
 };
 
+export type Execution = {
+  target: Address;
+  value: string;
+  callData: Hex;
+};
+
 export async function createAndSignUserOp({
   callData,
   activeAccount,
@@ -131,14 +137,14 @@ export async function submitUserOpToBundler(
 }
 
 export function encodeUserOpCallData({
-  actions,
+  executions,
 }: {
-  actions: { target: Address; value: string; callData: Hex }[];
+  executions: Execution[];
 }): Hex {
-  if (actions.length === 0) {
-    throw new Error("No actions");
-  } else if (actions.length === 1) {
-    const { target, value, callData } = actions[0];
+  if (executions.length === 0) {
+    throw new Error("No executions");
+  } else if (executions.length === 1) {
+    const { target, value, callData } = executions[0];
     return encodeFunctionData({
       functionName: "execute",
       abi: AccountInterface.abi,
@@ -178,7 +184,7 @@ export function encodeUserOpCallData({
             },
           ],
           // @ts-ignore
-          [actions]
+          [executions]
         ),
       ],
     });
