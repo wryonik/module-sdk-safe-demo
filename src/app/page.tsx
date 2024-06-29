@@ -7,7 +7,13 @@ import { getEth } from "@/utils/faucet";
 import { generateRandomString } from "@/utils/misc";
 import { createAndSignUserOp, submitUserOpToBundler } from "@/utils/userop";
 import { chosenValidator } from "@/utils/validator";
-import { Address, Hex, keccak256, stringToBytes } from "viem";
+import {
+  Address,
+  Hex,
+  encodeAbiParameters,
+  keccak256,
+  stringToBytes,
+} from "viem";
 
 export default function Home() {
   const sendEth = async () => {
@@ -20,11 +26,34 @@ export default function Home() {
     }
     const saltNonce = keccak256(stringToBytes(salt));
 
+    const oneWeekInSeconds = 60n * 60n * 24n * 7n;
+    const installData = encodeAbiParameters(
+      [
+        { type: "address[]" },
+        { type: "uint256[]" },
+        { type: "uint256" },
+        { type: "uint256" },
+        { type: "uint256" },
+      ],
+      [
+        ["0x39A67aFa3b68589a65F43c24FEaDD24df4Bb74e7"], // guardians TODO get from form
+        [1n], // weights
+        1n, // threshold
+        1n, // delay
+        oneWeekInSeconds * 2n, // expiry
+      ]
+    );
+
     // create a new account
     const activeAccount = await createAccount({
       salt: saltNonce,
       validators: [{ module: VALIDATOR_ADDRESS, initData: "0x" }],
-      executors: [],
+      executors: [
+        {
+          module: "0xa81Ff102BF1E6AEaF5055fbdce4D15FB75c72a20" as Address,
+          initData: installData,
+        },
+      ],
       fallbacks: [],
       hooks: [],
       safeConfig: {

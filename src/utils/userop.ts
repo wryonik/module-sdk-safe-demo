@@ -16,7 +16,7 @@ import {
 } from "permissionless";
 import { ENTRY_POINT_ADDRESS } from "./contracts";
 import { EntryPoint } from "permissionless/types";
-import { sepolia } from "viem/chains";
+import { baseSepolia } from "viem/chains";
 import { formatUserOp } from "./formatUserOp";
 
 export const CALL_TYPE = {
@@ -92,6 +92,8 @@ export async function createUnsignedUserOp(
   partialUserOp.maxFeePerGas = gasPriceResult.fast.maxFeePerGas;
   partialUserOp.maxPriorityFeePerGas = gasPriceResult.fast.maxPriorityFeePerGas;
 
+  console.log(formatUserOp(partialUserOp));
+
   const gasEstimate = await bundlerClient.estimateUserOperationGas({
     userOperation: partialUserOp,
   });
@@ -116,7 +118,7 @@ export async function signUserOp(
 ): Promise<any> {
   const userOpHash = getUserOperationHash({
     userOperation: userOp,
-    chainId: sepolia.id,
+    chainId: baseSepolia.id,
     entryPoint: ENTRY_POINT_ADDRESS,
   });
   const signature = await chosenValidator.signMessageAsync(

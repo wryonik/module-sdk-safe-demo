@@ -7,14 +7,14 @@ import {
   parseEther,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { sepolia } from "viem/chains";
+import { baseSepolia } from "viem/chains";
 import { getPublicClient } from "./clients";
 
 // simple faucet
 export const getEth = async (account: Address) => {
   const walletClient = createWalletClient({
     transport: http(process.env.NEXT_PUBLIC_RPC_URL!),
-    chain: sepolia,
+    chain: baseSepolia,
     account: privateKeyToAccount(process.env.NEXT_PUBLIC_FAUCET_KEY! as Hex),
   });
   const publicClient = getPublicClient();
