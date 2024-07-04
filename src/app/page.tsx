@@ -1,16 +1,18 @@
 "use client";
 
-import { getBundlerClient } from "@/utils/clients";
+import { getBundlerClient, getPublicClient } from "@/utils/clients";
 import { VALIDATOR_ADDRESS } from "@/utils/contracts";
 import { createAccount } from "@/utils/createAccount";
 import { getEth } from "@/utils/faucet";
 import { generateRandomString } from "@/utils/misc";
 import { createAndSignUserOp, submitUserOpToBundler } from "@/utils/userop";
 import { chosenValidator } from "@/utils/validator";
+import AccountAbi from '../utils/abis/Account.json'
 import {
   Address,
   Hex,
   encodeAbiParameters,
+  encodeFunctionData,
   keccak256,
   stringToBytes,
 } from "viem";
@@ -70,6 +72,16 @@ export default function Home() {
         callData: "0x" as Hex,
       },
     });
+    const publicClient = getPublicClient();
+
+    const { data: isModuleEnabled } = (await publicClient.readContract({
+      address: activeAccount.address,
+      abi: AccountAbi.abi,
+      functionName: "isModuleInstalled",
+      args: [2, activeAccount.address, installData],
+    }))
+
+    console.log(activeAccount.address, isModuleEnabled)
 
     // get some eth from the faucet
     await getEth(activeAccount.address);
